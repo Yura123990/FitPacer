@@ -112,6 +112,7 @@ void handleModeSelection() {
     reps = repString.toInt();
     sets = setString.toInt();
     pace = paceString.toInt();
+    pace = round(pace/32);
     if (pace<10) pace=50;
     if (reps>16 || reps<1) reps=8;
     if (sets>16 || sets<1) sets=3;
@@ -251,12 +252,37 @@ void handleBluetooth(){
   if (Serial.available()) {
     String receivedData = Serial.readStringUntil('\n');
     receivedData.trim();
+    if (isConfig == true && receivedData!="start" && receivedData!="reset"){
+      int firstSpace = receivedData.indexOf(' ');
+      int secondSpace = receivedData.indexOf(' ', firstSpace + 1);
+  
+      String repString = receivedData.substring(0, firstSpace);
+      String setString = receivedData.substring(firstSpace + 1, secondSpace);
+      String paceString = receivedData.substring(secondSpace + 1);
+      if (isValidInteger(repString) && isValidInteger(setString) && isValidInteger(paceString)) {
+      reps = repString.toInt();
+      sets = setString.toInt();
+      pace = paceString.toInt();
+      if (pace<10) pace=50;
+      if (reps>=17 || reps<1) reps=8;
+      if (sets>=17 || sets<1) sets=3;
+      }
+      else {
+        reps=8;
+        sets=3;
+        pace=50;
+        }
+      modes[4] = {reps, sets, pace};
+      currentMode = 4;
+      displayModePreview();
+    }
     if (receivedData=="reset"){
       isConfig = true;
       isRunning = false;
       isCooldown = false;
       completedSets = 0;
       completedCycles = 0;
+      step = 0;
       counterStrip.clear();
       setsStrip.clear();
       mainStrip.clear();
@@ -266,6 +292,7 @@ void handleBluetooth(){
       displayModePreview();
       }
     if (receivedData=="start"){
+      if (isConfig) {
       isConfig = false;
       isRunning = true;
       counterStrip.clear();
@@ -274,6 +301,36 @@ void handleBluetooth(){
       setsStrip.show();
       displayActiveMarkers();
       startCooldown();
+    }
+    else{
+    if (completedSets >= modes[currentMode].sets) {
+      isConfig = true;
+      completedSets = 0;
+      completedCycles = 0;
+      counterStrip.clear();
+      setsStrip.clear();
+      counterStrip.show();
+      setsStrip.show();
+      displayModePreview();
+    }
+    else if (isRunning == false && completedSets < modes[currentMode].sets && isCooldown==false){
+      completedCycles = 0;
+      counterStrip.clear();
+      counterStrip.show();
+      displayActiveMarkers();
+      startCooldown();
+    }
+    else if(isRunning == true && completedSets < modes[currentMode].sets) {
+      isRunning = false;
+      completedCycles = 0;
+      step = 0;
+      counterStrip.clear();
+      counterStrip.show();
+      mainStrip.clear();
+      mainStrip.show();
+      displayActiveMarkers();
+      }
+    }
       }
   }
 }
