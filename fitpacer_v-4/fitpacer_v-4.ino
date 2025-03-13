@@ -98,34 +98,6 @@ void handleModeSelection() {
     currentMode = (currentMode + 1) % totalModes;
     displayModePreview();
   }
-  if (Serial.available()) {
-    String receivedData = Serial.readStringUntil('\n');
-    receivedData.trim();
-
-    int firstSpace = receivedData.indexOf(' ');
-    int secondSpace = receivedData.indexOf(' ', firstSpace + 1);
-
-    String repString = receivedData.substring(0, firstSpace);
-    String setString = receivedData.substring(firstSpace + 1, secondSpace);
-    String paceString = receivedData.substring(secondSpace + 1);
-    if (isValidInteger(repString) && isValidInteger(setString) && isValidInteger(paceString)) {
-    reps = repString.toInt();
-    sets = setString.toInt();
-    pace = paceString.toInt();
-    pace = round(pace/32);
-    if (pace<10) pace=50;
-    if (reps>16 || reps<1) reps=8;
-    if (sets>16 || sets<1) sets=3;
-    }
-    else {
-      reps=8;
-      sets=3;
-      pace=50;
-      }
-    modes[4] = {reps, sets, pace};
-    currentMode = 4;
-    displayModePreview();
-  }
 }
 
 void displayModePreview() {
@@ -263,6 +235,7 @@ void handleBluetooth(){
       reps = repString.toInt();
       sets = setString.toInt();
       pace = paceString.toInt();
+      pace = pace/32;
       if (pace<10) pace=50;
       if (reps>=17 || reps<1) reps=8;
       if (sets>=17 || sets<1) sets=3;
